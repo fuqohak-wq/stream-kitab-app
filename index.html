@@ -3,79 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Streaming & Reader Kitab Digital</title>
+    <title>Majelis Stream Kitab Digital</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- PDF.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Lucide Icons CDN -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <!-- Navigasi & Kontrol Atas -->
+
+    <!-- Header / Navbar Utama -->
     <header class="navbar">
         <div class="brand">
-            <i data-lucide="book-open-check"></i>
-            <span>Majelis Stream Kitab</span>
+            <div class="brand-icon">
+                <i data-lucide="book-open"></i>
+            </div>
+            <div class="brand-text">
+                <span class="title">Majelis Kitab</span>
+                <span class="subtitle">Digital Streaming</span>
+            </div>
         </div>
-        <div class="controls-top">
-            <div class="input-group">
-                <i data-lucide="youtube"></i>
-                <input type="text" id="yt-url-input" placeholder="URL Live YouTube / Video ID..." />
-                <button id="btn-load-yt">Muat Stream</button>
+
+        <div class="navbar-actions">
+            <!-- URL Stream Input -->
+            <div class="input-box">
+                <i data-lucide="youtube" class="icon-muted"></i>
+                <input type="text" id="yt-url-input" placeholder="Masukkan URL / ID YouTube Live..." />
+                <button id="btn-load-yt" class="btn btn-primary">Muat</button>
             </div>
-            <div class="input-group">
-                <i data-lucide="file-text"></i>
-                <label for="pdf-file-input" class="btn-file-label">Buka PDF Kitab</label>
-                <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;" />
-            </div>
+
+            <!-- Upload PDF -->
+            <label for="pdf-file-input" class="btn btn-secondary btn-file">
+                <i data-lucide="file-up"></i>
+                <span>Buka Kitab (PDF)</span>
+            </label>
+            <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;" />
+
+            <!-- Toggle Theme -->
             <button id="theme-toggle" class="btn-icon" title="Ubah Tema">
                 <i data-lucide="sun"></i>
             </button>
         </div>
     </header>
 
-    <!-- Tata Letak Utama (Dual Panel) -->
+    <!-- Tata Letak Utama -->
     <main class="main-layout">
-        <!-- Panel Kiri: Pemutar Stream YouTube & Running Text -->
+        
+        <!-- PANEL KIRI: Streaming Controller & Player -->
         <section class="panel panel-left">
-            <div class="stream-container">
-                <iframe id="yt-player" src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <!-- Header Panel Stream -->
+            <div class="panel-header">
+                <div class="stream-info-head">
+                    <!-- Tombol TEKAN LIVE -->
+                    <button id="btn-go-live" class="btn-live active" title="Klik untuk sinkronkan ke siaran langsung">
+                        <span class="live-dot"></span>
+                        <span class="live-text">TEKAN LIVE</span>
+                    </button>
+                    <span id="stream-title" class="stream-title-text">Pengajian Kitab Online</span>
+                </div>
+
+                <!-- Control Mode Stream (Video / Audio / Hide) -->
+                <div class="mode-selector">
+                    <button class="btn-mode active" data-mode="video" title="Mode Video">
+                        <i data-lucide="video"></i>
+                        <span>Video</span>
+                    </button>
+                    <button class="btn-mode" data-mode="audio" title="Mode Hemat Kuota / Audio saja">
+                        <i data-lucide="headphones"></i>
+                        <span>Audio</span>
+                    </button>
+                    <button class="btn-mode" data-mode="off" title="Sembunyikan Stream">
+                        <i data-lucide="eye-off"></i>
+                        <span>Tutup</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Container Pemutar Video/Audio -->
+            <div class="stream-wrapper" id="stream-wrapper">
+                <div class="iframe-container" id="iframe-container">
+                    <iframe id="yt-player" 
+                            src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID&enablejsapi=1" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
                 
-                <!-- Overlay badge di atas video -->
-                <div class="stream-overlay">
-                    <span class="live-badge"><i data-lucide="radio"></i> LIVE</span>
-                    <span id="stream-title">Pengajian Kitab Online</span>
+                <!-- Placeholder saat Mode Audio atau Off -->
+                <div class="audio-only-placeholder" id="audio-placeholder" style="display: none;">
+                    <i data-lucide="radio" class="audio-pulse-icon"></i>
+                    <p>Mode Audio Aktif (Mendengarkan Pengajian)</p>
                 </div>
             </div>
 
-            <!-- Running Text / Teks Berjalan -->
-            <div class="marquee-bar">
-                <div class="marquee-content">
-                    Selamat Datang di Pengajian Online • Silahkan muat kitab PDF pada panel sebelah kanan • Jangan lupa subscribe channel YouTube ini.
+            <!-- Running Text / Marquee -->
+            <div class="marquee-card">
+                <div class="marquee-tag"><i data-lucide="megaphone"></i> INFO</div>
+                <div class="marquee-body">
+                    <div class="marquee-content">
+                        Selamat Datang di Pengajian Online • Silahkan muat kitab PDF pada panel sebelah kanan • Tekan tombol LIVE untuk selalu mengikuti tayangan terkini.
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Panel Kanan: PDF Viewer & Control Bar -->
+        <!-- PANEL KANAN: PDF Viewer Digital Kitab -->
         <section class="panel panel-right">
+            <!-- Toolbar PDF -->
             <div class="pdf-toolbar">
-                <button id="prev-page" class="btn-nav" title="Halaman Sebelumnya"><i data-lucide="chevron-left"></i></button>
-                <div class="page-info">
-                    <span>Hal</span>
-                    <input type="number" id="page-num" value="1" min="1" />
-                    <span>/ <span id="page-count">-</span></span>
+                <div class="pdf-nav-group">
+                    <button id="prev-page" class="btn-icon-sm" title="Halaman Sebelumnya">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <div class="page-counter">
+                        <span>Hal</span>
+                        <input type="number" id="page-num" value="1" min="1" />
+                        <span>/ <span id="page-count">-</span></span>
+                    </div>
+                    <button id="next-page" class="btn-icon-sm" title="Halaman Selanjutnya">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
                 </div>
-                <button id="next-page" class="btn-nav" title="Halaman Selanjutnya"><i data-lucide="chevron-right"></i></button>
-                <div class="divider"></div>
-                <button id="zoom-out" class="btn-nav" title="Perkecil"><i data-lucide="zoom-out"></i></button>
-                <span id="zoom-level">120%</span>
-                <button id="zoom-in" class="btn-nav" title="Perbesar"><i data-lucide="zoom-in"></i></button>
+
+                <div class="v-divider"></div>
+
+                <div class="pdf-zoom-group">
+                    <button id="zoom-out" class="btn-icon-sm" title="Perkecil">
+                        <i data-lucide="zoom-out"></i>
+                    </button>
+                    <span id="zoom-level" class="zoom-text">100%</span>
+                    <button id="zoom-in" class="btn-icon-sm" title="Perbesar">
+                        <i data-lucide="zoom-in"></i>
+                    </button>
+                </div>
             </div>
-            
-            <div class="pdf-scroll-container">
-                <canvas id="pdf-render-canvas"></canvas>
+
+            <!-- Area Canvas PDF -->
+            <div class="pdf-viewport">
+                <div id="pdf-empty-state" class="empty-state">
+                    <i data-lucide="file-text"></i>
+                    <p>Belum ada Kitab PDF yang dibuka</p>
+                    <label for="pdf-file-input" class="btn btn-primary btn-sm">Pilih File PDF</label>
+                </div>
+                <canvas id="pdf-render-canvas" style="display: none;"></canvas>
             </div>
         </section>
+
     </main>
 
     <script src="script.js"></script>
