@@ -1,107 +1,99 @@
-// PDF.js Worker Configuration
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-let pdfDoc = null,
-    pageNum = 1,
-    pageRendering = false,
-    pageNumPending = null,
-    scale = 1.2,
-    canvas = document.getElementById('pdf-render-canvas'),
-    ctx = canvas.getContext('2d');
-
 // Inisialisasi Ikon Lucide
 lucide.createIcons();
 
-// Fitur Pengubah Tema (Dark/Light Mode)
+// Elements DOM
 const themeToggleBtn = document.getElementById('theme-toggle');
+const htmlEl = document.documentElement;
+
+const ytInput = document.getElementById('yt-url-input');
+const btnLoadYt = document.getElementById('btn-load-yt');
+const ytPlayer = document.getElementById('yt-player');
+const iframeContainer = document.getElementById('iframe-container');
+const audioPlaceholder = document.getElementById('audio-placeholder');
+const btnGoLive = document.getElementById('btn-go-live');
+const modeButtons = document.querySelectorAll('.btn-mode');
+
+// --- 1. Mode Tema (Dark/Light Sync) ---
 themeToggleBtn.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const currentTheme = htmlEl.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    themeToggleBtn.innerHTML = newTheme === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
-    lucide.createIcons();
+    htmlEl.setAttribute('data-theme', newTheme);
 });
 
-// Render Halaman PDF
-function renderPage(num) {
-    pageRendering = true;
-    pdfDoc.getPage(num).then((page) => {
-        const viewport = page.getViewport({ scale: scale });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+// --- 2. Pemutar Stream YouTube & Parse ID ---
+function extractYouTubeID(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|live\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : url;
+}
 
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        const renderTask = page.render(renderContext);
+btnLoadYt.addEventListener('click', () => {
+    const inputVal = ytInput.value.trim();
+    if (!inputVal) return;
 
-        renderTask.promise.then(() => {
-            pageRendering = false;
-            if (pageNumPending !== null) {
-                renderPage(pageNumPending);
-                pageNumPending = null;
-            }
-        });
+    const videoId = extractYouTubeID(inputVal);
+    // Muat embed YouTube dengan Autoplay & JS API
+    ytPlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+});
+
+// --- 3. Tombol "TEKAN LIVE" ---
+btnGoLive.addEventListener('click', () => {
+    // Memuat ulang iframe agar kembali ke posisi live paling depan
+    const currentSrc = ytPlayer.src;
+    if (currentSrc) {
+        ytPlayer.src = currentSrc;
+        btnGoLive.classList.add('active');
+    }
+});
+
+// --- 4. Switcher Mode Stream (Video / Audio / Tutup) ---
+modeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        modeButtons.forEach(b => b.classList.remove('active'));
+        button.classList.add('active');
+
+        const mode = button.getAttribute('data-mode');
+
+        if (mode === 'video') {
+            iframeContainer.style.display = 'block';
+            audioPlaceholder.style.display = 'none';
+            iframeContainer.style.height = '100%';
+        } else if (mode === 'audio') {
+            // Dalam mode audio, kita kecilkan/sembunyikan tampilan visual video tapi audio tetap berjalan
+            iframeContainer.style.display = 'none';
+            audioPlaceholder.style.display = 'flex';
+        } else if (mode === 'off') {
+            iframeContainer.style.display = 'none';
+            audioPlaceholder.style.display = 'none';
+        }
     });
-
-    document.getElementById('page-num').value = num;
-}
-
-function queueRenderPage(num) {
-    if (pageRendering) {
-        pageNumPending = num;
-    } else {
-        renderPage(num);
-    }
-}
-
-// Navigasi Halaman PDF
-document.getElementById('prev-page').addEventListener('click', () => {
-    if (pageNum <= 1) return;
-    pageNum--;
-    queueRenderPage(pageNum);
 });
 
-document.getElementById('next-page').addEventListener('click', () => {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++;
-    queueRenderPage(pageNum);
-});
+// --- 5. Logika PDF.js ---
+const pdfInput = document.getElementById('pdf-file-input');
+const pdfCanvas = document.getElementById('pdf-render-canvas');
+const emptyState = document.getElementById('pdf-empty-state');
+const pageNumInput = document.getElementById('page-num');
+const pageCountEl = document.getElementById('page-count');
+const zoomLevelEl = document.getElementById('zoom-level');
 
-document.getElementById('page-num').addEventListener('change', (e) => {
-    const desiredPage = parseInt(e.target.value);
-    if (desiredPage >= 1 && desiredPage <= pdfDoc.numPages) {
-        pageNum = desiredPage;
-        queueRenderPage(pageNum);
-    }
-});
+let pdfDoc = null;
+let pageNum = 1;
+let scale = 1.2;
+const ctx = pdfCanvas.getContext('2d');
 
-// Kontrol Zoom PDF
-document.getElementById('zoom-in').addEventListener('click', () => {
-    scale += 0.2;
-    document.getElementById('zoom-level').textContent = `${Math.round(scale * 100)}%`;
-    queueRenderPage(pageNum);
-});
-
-document.getElementById('zoom-out').addEventListener('click', () => {
-    if (scale <= 0.6) return;
-    scale -= 0.2;
-    document.getElementById('zoom-level').textContent = `${Math.round(scale * 100)}%`;
-    queueRenderPage(pageNum);
-});
-
-// Memuat File PDF Lokal
-document.getElementById('pdf-file-input').addEventListener('change', (e) => {
+pdfInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
         const fileReader = new FileReader();
         fileReader.onload = function() {
             const typedarray = new Uint8Array(this.result);
-            pdfjsLib.getDocument(typedarray).promise.then((pdfDoc_) => {
-                pdfDoc = pdfDoc_;
-                document.getElementById('page-count').textContent = pdfDoc.numPages;
+            pdfjsLib.getDocument(typedarray).promise.then((pdf) => {
+                pdfDoc = pdf;
+                pageCountEl.textContent = pdf.numPages;
                 pageNum = 1;
+                emptyState.style.display = 'none';
+                pdfCanvas.style.display = 'block';
                 renderPage(pageNum);
             });
         };
@@ -109,20 +101,43 @@ document.getElementById('pdf-file-input').addEventListener('change', (e) => {
     }
 });
 
-// Memuat Link YouTube Live / Video ID
-document.getElementById('btn-load-yt').addEventListener('click', () => {
-    const input = document.getElementById('yt-url-input').value.trim();
-    if (!input) return;
-    
-    let videoId = input;
-    if (input.includes('youtube.com/watch?v=')) {
-        videoId = input.split('v=')[1].split('&')[0];
-    } else if (input.includes('youtu.be/')) {
-        videoId = input.split('youtu.be/')[1].split('?')[0];
-    } else if (input.includes('youtube.com/live/')) {
-        videoId = input.split('youtube.com/live/')[1].split('?')[0];
-    }
+function renderPage(num) {
+    if (!pdfDoc) return;
+    pdfDoc.getPage(num).then((page) => {
+        const viewport = page.getViewport({ scale: scale });
+        pdfCanvas.height = viewport.height;
+        pdfCanvas.width = viewport.width;
 
-    const iframe = document.getElementById('yt-player');
-    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        page.render(renderContext);
+        pageNumInput.value = num;
+    });
+}
+
+document.getElementById('prev-page').addEventListener('click', () => {
+    if (pageNum <= 1) return;
+    pageNum--;
+    renderPage(pageNum);
+});
+
+document.getElementById('next-page').addEventListener('click', () => {
+    if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+    pageNum++;
+    renderPage(pageNum);
+});
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+    scale += 0.15;
+    zoomLevelEl.textContent = `${Math.round(scale * 100)}%`;
+    renderPage(pageNum);
+});
+
+document.getElementById('zoom-out').addEventListener('click', () => {
+    if (scale <= 0.5) return;
+    scale -= 0.15;
+    zoomLevelEl.textContent = `${Math.round(scale * 100)}%`;
+    renderPage(pageNum);
 });
