@@ -1,161 +1,823 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Majelis Stream Kitab Digital</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- PDF.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Majelis Kitab - Digital Streaming Studio</title>
+  <!-- PDF.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #0f172a;
+      --accent-blue: #2563eb;
+      --accent-green: #16a34a;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background-color: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      background-color: var(--accent-blue);
+      padding: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
+
+    .url-input-container {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .url-input-container input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      background-color: var(--accent-blue);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn-file {
+      background-color: #3b82f6;
+    }
+
+    /* Main Grid Layout (2 Column: Left Stream/Banner, Right PDF) */
+    .container {
+      display: flex;
+      flex: 1;
+      padding: 15px;
+      gap: 15px;
+      height: calc(100vh - 60px);
+    }
+
+    /* Left Panel: Stream & Presenter Banner Layout */
+    .left-panel {
+      flex: 1;
+      background-color: var(--panel-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stream-controls-bar {
+      padding: 10px 15px;
+      background-color: rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .live-badge {
+      background-color: #ef4444;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .live-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background-color: white;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .mode-switch {
+      display: flex;
+      background-color: var(--bg-dark);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .mode-btn.active {
+      background-color: var(--accent-blue);
+      color: white;
+    }
+
+    .stream-viewport {
+      flex: 1;
+      position: relative;
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Container khusus jika ingin style foto/frame kyai ala Gambar Kiri */
+    .banner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0.2) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .kyai-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .kyai-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 3px solid var(--accent-blue);
+      object-fit: cover;
+      background-color: #fff;
+    }
+
+    .kyai-info {
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .kyai-title {
+      font-size: 0.8rem;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .kyai-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .stream-iframe, video {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+    }
+
+    /* Right Panel: PDF Viewer */
+    .right-panel {
+      flex: 1;
+      background-color: var(--panel-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pdf-toolbar {
+      padding: 10px 15px;
+      background-color: rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .pdf-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pdf-nav button {
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pdf-zoom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pdf-container {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 15px;
+      background-color: #0b0f19;
+    }
+
+    #pdf-canvas {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      background-color: white;
+      max-width: 100%;
+    }
+
+    /* Hidden File Input */
+    #pdf-upload-input {
+      display: none;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Utama -->
-    <header class="navbar">
-        <div class="brand">
-            <div class="brand-icon">
-                <i data-lucide="book-open"></i>
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">📖</div>
+      <div>
+        <div class="brand-title">Majelis Kitab</div>
+        <div class="brand-subtitle">Digital Streaming Studio</div>
+      </div>
+    </div>
+
+    <!-- YouTube Embed / Video Source Input -->
+    <div class="url-input-container">
+      <input type="text" id="yt-url-input" placeholder="Masukkan Link / ID Video YouTube (cth: dQw4w9WgXcQ)" />
+      <button class="btn" onclick="loadYouTubeVideo()">Muat Video</button>
+    </div>
+
+    <div>
+      <input type="file" id="pdf-upload-input" accept="application/pdf" onchange="handleFileUpload(event)" />
+      <button class="btn btn-file" onclick="document.getElementById('pdf-upload-input').click()">📄 Buka Kitab (PDF)</button>
+    </div>
+  </header>
+
+  <!-- Main Split Layout -->
+  <div class="container">
+    
+    <!-- Left Column: Video Stream / Kyai Profile Banner -->
+    <div class="left-panel">
+      <div class="stream-controls-bar">
+        <div class="live-badge">TEKAN LIVE</div>
+        <span style="font-size: 0.85rem; font-weight: 500;">Pengajian Kitab Online</span>
+        <div class="mode-switch">
+          <button class="mode-btn active" id="btn-mode-video" onclick="setStreamMode('video')">📹 Video</button>
+          <button class="mode-btn" id="btn-mode-audio" onclick="setStreamMode('audio')">🎧 Audio</button>
+        </div>
+      </div>
+
+      <div class="stream-viewport" id="stream-viewport">
+        <!-- Overlay banner penceramah (seperti layout Gambar Kiri) -->
+        <div class="banner-overlay" id="banner-overlay">
+          <div class="kyai-profile">
+            <!-- Ganti src dengan foto kyai/penceramah -->
+            <img src="https://via.placeholder.com/100" alt="Syaikhuna" class="kyai-avatar" id="kyai-avatar"/>
+            <div class="kyai-info">
+              <div class="kyai-title">Syaikhuna / Pengasuh</div>
+              <div class="kyai-name" id="kyai-name">KH. M. Najih Maimoen</div>
             </div>
-            <div class="brand-text">
-                <span class="title">Majelis Kitab</span>
-                <span class="subtitle">Digital Streaming</span>
-            </div>
+          </div>
         </div>
 
-        <div class="navbar-actions">
-            <!-- URL Stream Input -->
-            <div class="input-box">
-                <i data-lucide="youtube" class="icon-muted"></i>
-                <input type="text" id="yt-url-input" placeholder="Masukkan URL / ID YouTube Live..." />
-                <button id="btn-load-yt" class="btn btn-primary">Muat</button>
-            </div>
+        <!-- Youtube / Video Embed Element -->
+        <iframe id="yt-player" class="stream-iframe" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+    </div>
 
-            <!-- Upload PDF -->
-            <label for="pdf-file-input" class="btn btn-secondary btn-file">
-                <i data-lucide="file-up"></i>
-                <span>Buka Kitab (PDF)</span>
-            </label>
-            <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;" />
-
-            <!-- Toggle Theme -->
-            <button id="theme-toggle" class="btn-icon" title="Ubah Tema">
-                <i data-lucide="sun"></i>
-            </button>
+    <!-- Right Column: PDF Kitab Reader -->
+    <div class="right-panel">
+      <div class="pdf-toolbar">
+        <div class="pdf-nav">
+          <button onclick="prevPage()">❮</button>
+          <span>Hal <input type="number" id="page-num-input" value="1" min="1" style="width: 45px; text-align: center; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px;" onchange="goToPage(this.value)"> / <span id="page-count">0</span></span>
+          <button onclick="nextPage()">❯</button>
         </div>
-    </header>
+        <div class="pdf-zoom">
+          <button onclick="zoomOut()">−</button>
+          <span id="zoom-percentage">100%</span>
+          <button onclick="zoomIn()">＋</button>
+        </div>
+      </div>
 
-    <!-- Tata Letak Utama -->
-    <main class="main-layout">
-        
-        <!-- PANEL KIRI: Streaming Controller & Player -->
-        <section class="panel panel-left">
-            <!-- Header Panel Stream -->
-            <div class="panel-header">
-                <div class="stream-info-head">
-                    <!-- Tombol TEKAN LIVE -->
-                    <button id="btn-go-live" class="btn-live active" title="Klik untuk sinkronkan ke siaran langsung">
-                        <span class="live-dot"></span>
-                        <span class="live-text">TEKAN LIVE</span>
-                    </button>
-                    <span id="stream-title" class="stream-title-text">Pengajian Kitab Online</span>
-                </div>
+      <div class="pdf-container">
+        <canvas id="pdf-canvas"></canvas>
+      </div>
+    </div>
 
-                <!-- Control Mode Stream (Video / Audio / Hide) -->
-                <div class="mode-selector">
-                    <button class="btn-mode active" data-mode="video" title="Mode Video">
-                        <i data-lucide="video"></i>
-                        <span>Video</span>
-                    </button>
-                    <button class="btn-mode" data-mode="audio" title="Mode Hemat Kuota / Audio saja">
-                        <i data-lucide="headphones"></i>
-                        <span>Audio</span>
-                    </button>
-                    <button class="btn-mode" data-mode="off" title="Sembunyikan Stream">
-                        <i data-lucide="eye-off"></i>
-                        <span>Tutup</span>
-                    </button>
-                </div>
-            </div>
+  </div>
 
-            <!-- Container Pemutar Video/Audio -->
-            <div class="stream-wrapper" id="stream-wrapper">
-                <div class="iframe-container" id="iframe-container">
-                    <iframe id="yt-player" 
-                            src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID&enablejsapi=1" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen>
-                    </iframe>
-                </div>
-                
-                <!-- Placeholder saat Mode Audio atau Off -->
-                <div class="audio-only-placeholder" id="audio-placeholder" style="display: none;">
-                    <i data-lucide="radio" class="audio-pulse-icon"></i>
-                    <p>Mode Audio Aktif (Mendengarkan Pengajian)</p>
-                </div>
-            </div>
+  <script>
+    // PDF.js Variables
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let scale = 1.2;
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
 
-            <!-- Running Text / Marquee -->
-            <div class="marquee-card">
-                <div class="marquee-tag"><i data-lucide="megaphone"></i> INFO</div>
-                <div class="marquee-body">
-                    <div class="marquee-content">
-                        Selamat Datang di Pengajian Online • Silahkan muat kitab PDF pada panel sebelah kanan • Tekan tombol LIVE untuk selalu mengikuti tayangan terkini.
-                    </div>
-                </div>
-            </div>
-        </section>
+    // Load PDF File
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function(page) {
+        let viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;Berikut adalah pembaruan kode HTML, CSS, dan JavaScript lengkap agar aplikasi Anda bisa berfungsi sebagai **Studio Pengajian (Composite Layout)**. 
 
-        <!-- PANEL KANAN: PDF Viewer Digital Kitab -->
-        <section class="panel panel-right">
-            <!-- Toolbar PDF -->
-            <div class="pdf-toolbar">
-                <div class="pdf-nav-group">
-                    <button id="prev-page" class="btn-icon-sm" title="Halaman Sebelumnya">
-                        <i data-lucide="chevron-left"></i>
-                    </button>
-                    <div class="page-counter">
-                        <span>Hal</span>
-                        <input type="number" id="page-num" value="1" min="1" />
-                        <span>/ <span id="page-count">-</span></span>
-                    </div>
-                    <button id="next-page" class="btn-icon-sm" title="Halaman Selanjutnya">
-                        <i data-lucide="chevron-right"></i>
-                    </button>
-                </div>
+Di tampilan baru ini, Anda bisa menampilkan **Webcam/Video Live**, **Foto Kyai**, **Frame/Overlay**, dan **PDF Kitab** dalam satu tata letak (*layout*) persis seperti contoh tampilan siaran di gambar kiri.
 
-                <div class="v-divider"></div>
+---
 
-                <div class="pdf-zoom-group">
-                    <button id="zoom-out" class="btn-icon-sm" title="Perkecil">
-                        <i data-lucide="zoom-out"></i>
-                    </button>
-                    <span id="zoom-level" class="zoom-text">100%</span>
-                    <button id="zoom-in" class="btn-icon-sm" title="Perbesar">
-                        <i data-lucide="zoom-in"></i>
-                    </button>
-                </div>
-            </div>
+### Kode Lengkap (`index.html`)
 
-            <!-- Area Canvas PDF -->
-            <div class="pdf-viewport">
-                <div id="pdf-empty-state" class="empty-state">
-                    <i data-lucide="file-text"></i>
-                    <p>Belum ada Kitab PDF yang dibuka</p>
-                    <label for="pdf-file-input" class="btn btn-primary btn-sm">Pilih File PDF</label>
-                </div>
-                <canvas id="pdf-render-canvas" style="display: none;"></canvas>
-            </div>
-        </section>
+Simpan kode di bawah ini ke dalam file HTML Anda (misal `index.html`):
 
-    </main>
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Majelis Kitab - Digital Streaming Studio</title>
+  <!-- PDF.js Library -->
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js)';
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-    <script src="script.js"></script>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Control Bar */
+    header {
+      background-color: #1e293b;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #334155;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #2563eb;
+    }
+
+    .btn-secondary {
+      background-color: #475569;
+    }
+    .btn-secondary:hover {
+      background-color: #334155;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Main Broadcast Stage (Canvas 16:9) */
+    .stage-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+
+    .broadcast-stage {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      border: 2px solid #0284c7;
+    }
+
+    /* Left Side: Profile & Video Camera */
+    .left-panel {
+      width: 40%;
+      height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(5px);
+    }
+
+    .profile-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+
+    .profile-img-wrapper {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      overflow: hidden;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background-color: #1e293b;
+      position: relative;
+    }
+
+    .profile-img-wrapper img, .profile-img-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .badge-title {
+      background-color: #0284c7;
+      color: #ffffff;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .speaker-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
+
+    /* Right Side: PDF Viewer */
+    .right-panel {
+      width: 60%;
+      height: 100%;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border-left: 4px solid #38bdf8;
+    }
+
+    .pdf-toolbar {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      padding: 8px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    .pdf-toolbar .nav-btns {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .pdf-toolbar button {
+      background-color: #0284c7;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .pdf-viewport {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      background-color: #e2e8f0;
+    }
+
+    canvas#pdf-render {
+      max-width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    /* Bottom Overlay Banner */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0284c7;
+      color: white;
+      padding: 6px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls -->
+  <header>
+    <div class="brand">📖 Studio Pengajian Live</div>
+    <div class="controls">
+      <label class="btn btn-secondary">
+        📷 Upload Foto Kyai
+        <input type="file" id="upload-photo" accept="image/*">
+      </label>
+      <button class="btn btn-secondary" id="btn-webcam">🎥 Gunakan Kamera</button>
+      <label class="btn">
+        📄 Buka Kitab (PDF)
+        <input type="file" id="upload-pdf" accept="application/pdf">
+      </label>
+    </div>
+  </header>
+
+  <!-- Live Broadcast Layout (16:9 Output) -->
+  <div class="stage-container">
+    <div class="broadcast-stage" id="stage">
+      
+      <!-- Left Overlay (Profile / Speaker) -->
+      <div class="left-panel">
+        <div class="profile-card">
+          <div class="profile-img-wrapper" id="media-container">
+            <!-- Default Photo -->
+            <img id="speaker-img" src="[https://via.placeholder.com/180?text=Foto+Kyai](https://via.placeholder.com/180?text=Foto+Kyai)" alt="Penceramah">
+            <video id="webcam-video" autoplay playsinline style="display: none;"></video>
+          </div>
+          <div class="badge-title">Ngaos Selasaan</div>
+          <div class="speaker-name" id="speaker-name-display">Syaikhuna KH. M. Najih Maimoen</div>
+        </div>
+      </div>
+
+      <!-- Right Overlay (PDF Kitab) -->
+      <div class="right-panel">
+        <div class="pdf-toolbar">
+          <div class="nav-btns">
+            <button id="prev-page">◀ Prev</button>
+            <span style="font-size: 0.85rem;"> Hal: <strong id="page-num">1</strong> / <span id="page-count">-</span></span>
+            <button id="next-page">Next ▶</button>
+          </div>
+          <div>
+            <button id="zoom-out">-</button>
+            <button id="zoom-in">+</button>
+          </div>
+        </div>
+        <div class="pdf-viewport">
+          <canvas id="pdf-render"></canvas>
+        </div>
+      </div>
+
+      <!-- Teks Running / Banner Bawah -->
+      <div class="bottom-bar">
+        <span>ribathdarusshohihain</span>
+        <span>LIVE NGAOS SELASAAN KITAB AL-QUR'AN</span>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- PDF Render Logic ---
+    let pdfDoc = null,
+        pageNum = 1,
+        pageIsRendering = false,
+        pageNumIsPending = null,
+        scale = 1.2,
+        canvas = document.getElementById('pdf-render'),
+        ctx = canvas.getContext('2d');
+
+    const renderPage = num => {
+      pageIsRendering = true;
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderCtx = {
+          canvasContext: ctx,
+          viewport
+        };
+
+        page.render(renderCtx).promise.then(() => {
+          pageIsRendering = false;
+          if (pageNumIsPending !== null) {
+            renderPage(pageNumIsPending);
+            pageNumIsPending = null;
+          }
+        });
+
+        document.getElementById('page-num').textContent = num;
+      });
+    };
+
+    const queueRenderPage = num => {
+      if (pageIsRendering) {
+        pageNumIsPending = num;
+      } else {
+        renderPage(num);
+      }
+    };
+
+    // Load PDF
+    document.getElementById('upload-pdf').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const fileReader = new FileReader();
+        fileReader.onload = function() {
+          const typedarray = new Uint8Array(this.result);
+          pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+            pdfDoc = pdf;
+            document.getElementById('page-count').textContent = pdf.numPages;
+            pageNum = 1;
+            renderPage(pageNum);
+          });
+        };
+        fileReader.readAsArrayBuffer(file);
+      }
+    });
+
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (!pdfDoc || pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    });
+
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      if (!pdfDoc) return;
+      scale += 0.2;
+      queueRenderPage(pageNum);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      if (!pdfDoc || scale <= 0.6) return;
+      scale -= 0.2;
+      queueRenderPage(pageNum);
+    });
+
+    // --- Upload Foto Kyai ---
+    document.getElementById('upload-photo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          document.getElementById('speaker-img').src = event.target.result;
+          document.getElementById('speaker-img').style.display = 'block';
+          document.getElementById('webcam-video').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // --- Gunakan Kamera / Webcam ---
+    document.getElementById('btn-webcam').addEventListener('click', async () => {
+      const videoEl = document.getElementById('webcam-video');
+      const imgEl = document.getElementById('speaker-img');
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        videoEl.srcObject = stream;
+        videoEl.style.display = 'block';
+        imgEl.style.display = 'none';
+      } catch (err) {
+        alert("Tidak dapat mengakses kamera: " + err.message);
+      }
+    });
+  </script>
 </body>
 </html>
